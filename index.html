@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISFRON - Sistema Integrado de Fronteiras e Observação Nacional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="h-screen bg-slate-900 text-green-400 font-mono overflow-hidden">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-black flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="text-4xl mb-4">🇧🇷</div>
+            <div class="text-2xl text-green-400 mb-4">SISFRON</div>
+            <div class="text-sm mb-4">Sistema Integrado de Fronteiras e Observação Nacional</div>
+            <div class="loading-bar w-64 h-2 bg-gray-800 rounded">
+                <div class="loading-progress h-full bg-green-400 rounded transition-all duration-300"></div>
+            </div>
+            <div class="mt-2 text-xs" id="loadingText">Inicializando sistemas...</div>
+        </div>
+    </div>
+
+    <!-- Main Interface -->
+    <div id="mainInterface" class="hidden h-full flex flex-col">
+        <!-- Header -->
+        <header class="bg-slate-800 border-b border-green-500 p-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <div class="text-2xl">🇧🇷</div>
+                    <div>
+                        <h1 class="text-xl font-bold text-green-400">SISFRON v2.0</h1>
+                        <p class="text-xs text-gray-400">Sistema Integrado de Fronteiras e Observação Nacional</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <div class="text-sm" id="currentUser">Operador SISFRON</div>
+                        <div class="text-xs text-gray-400" id="systemTime"></div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="toggleFullscreen()" class="px-3 py-1 bg-green-600 text-black rounded text-sm hover:bg-green-500">
+                            Tela Cheia
+                        </button>
+                        <button onclick="showSettings()" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-500">
+                            Configurações
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="bg-slate-800 border-b border-green-500">
+            <div class="flex overflow-x-auto">
+                <button class="tab-button active" data-tab="dashboard">🏠 Dashboard</button>
+                <button class="tab-button" data-tab="weather">🌤️ Meteorologia</button>
+                <button class="tab-button" data-tab="maps">🗺️ Mapas</button>
+                <button class="tab-button" data-tab="radar">📡 Radar</button>
+                <button class="tab-button" data-tab="economics">💰 Economia</button>
+                <button class="tab-button" data-tab="states">🏛️ Estados</button>
+                <button class="tab-button" data-tab="security">🛡️ Segurança</button>
+                <button class="tab-button" data-tab="terminal">💻 Terminal</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-hidden">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active h-full p-4 overflow-y-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 h-full">
+                    <!-- Status Brasil -->
+                    <div class="widget bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-3 text-green-400">🇧🇷 Status do Brasil</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>População:</span>
+                                <span class="text-green-400">215.3M</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Estados:</span>
+                                <span class="text-green-400">26 + DF</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Municípios:</span>
+                                <span class="text-green-400">5.570</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Área:</span>
+                                <span class="text-green-400">8.5M km²</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Fuso Horário:</span>
+                                <span class="text-green-400" id="currentTimezone">UTC-3</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clima Tempo Real -->
+                    <div class="widget bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-3 text-green-400">🌡️ Clima Nacional</h3>
+                        <div id="weatherSummary" class="space-y-2 text-sm">
+                            <div class="animate-pulse">Carregando dados meteorológicos...</div>
+                        </div>
+                    </div>
+
+                    <!-- Economia -->
+                    <div class="widget bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-3 text-green-400">💱 Indicadores Econômicos</h3>
+                        <div id="economicData" class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>Dólar (USD):</span>
+                                <span class="text-yellow-400" id="usdRate">R$ 5.20</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Euro (EUR):</span>
+                                <span class="text-blue-400" id="eurRate">R$ 5.65</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>SELIC:</span>
+                                <span class="text-green-400">11.75%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>IPCA:</span>
+                                <span class="text-red-400">4.50%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sistema Activity -->
+                    <div class="widget bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-3 text-green-400">⚡ Atividade do Sistema</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span>CPU</span>
+                                    <span id="cpuUsage">45%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-green-400" style="width: 45%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span>Memória</span>
+                                    <span id="memUsage">62%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-blue-400" style="width: 62%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span>Rede</span>
+                                    <span>Online</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-green-400" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Logs Recentes -->
+                    <div class="widget bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-3 text-green-400">📋 Logs Recentes</h3>
+                        <div id="recentLogs" class="space-y-1 text-xs max-h-32 overflow-y-auto">
+                            <!-- Logs will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Mapa Brasil Miniatura -->
+                    <div class="widget bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-3 text-green-400">🗺️ Visão Geral</h3>
+                        <div id="miniMap" class="h-32 bg-slate-700 rounded flex items-center justify-center text-gray-400">
+                            Mapa do Brasil em miniatura
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather Tab -->
+            <div id="weather" class="tab-content h-full p-4 overflow-y-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🌤️ Condições Meteorológicas</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <select id="stateSelect" class="bg-slate-700 border border-green-500 rounded p-2 text-green-400">
+                                <option value="">Selecione o Estado</option>
+                            </select>
+                            <select id="citySelect" class="bg-slate-700 border border-green-500 rounded p-2 text-green-400">
+                                <option value="">Selecione a Cidade</option>
+                            </select>
+                        </div>
+                        <div id="weatherDetails" class="mt-4 space-y-4">
+                            <!-- Weather details will be populated here -->
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">📊 Gráfico Meteorológico</h3>
+                        <canvas id="weatherChart" class="w-full h-64"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maps Tab -->
+            <div id="maps" class="tab-content h-full">
+                <div class="h-full relative">
+                    <div id="mapContainer" class="h-full"></div>
+                    <div class="absolute top-4 left-4 bg-slate-800 border border-green-500 rounded p-4 z-1000">
+                        <h3 class="text-lg font-bold mb-2 text-green-400">🗺️ Controles do Mapa</h3>
+                        <div class="space-y-2">
+                            <button onclick="showFullBrazil()" class="w-full px-3 py-1 bg-green-600 text-black rounded text-sm hover:bg-green-500">
+                                Ver Brasil Completo
+                            </button>
+                            <button onclick="showStateCapitals()" class="w-full px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-500">
+                                Capitais
+                            </button>
+                            <button onclick="showMajorCities()" class="w-full px-3 py-1 bg-yellow-600 text-black rounded text-sm hover:bg-yellow-500">
+                                Grandes Cidades
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Radar Tab -->
+            <div id="radar" class="tab-content h-full p-4 overflow-y-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">📡 Sistema de Radar</h3>
+                        <div id="radarDisplay" class="h-64 bg-slate-900 rounded border border-green-500 relative overflow-hidden">
+                            <canvas id="radarCanvas" class="w-full h-full"></canvas>
+                        </div>
+                        <div class="mt-4 space-y-2">
+                            <button onclick="startRadarScan()" class="px-4 py-2 bg-green-600 text-black rounded hover:bg-green-500">
+                                Iniciar Varredura
+                            </button>
+                            <button onclick="stopRadarScan()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500">
+                                Parar Varredura
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🎯 Detecções</h3>
+                        <div id="radarDetections" class="space-y-2 max-h-64 overflow-y-auto">
+                            <!-- Radar detections will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Economics Tab -->
+            <div id="economics" class="tab-content h-full p-4 overflow-y-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">💰 Cotações</h3>
+                        <div id="exchangeRates" class="space-y-3">
+                            <!-- Exchange rates will be populated here -->
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">📈 Gráfico Econômico</h3>
+                        <canvas id="economicChart" class="w-full h-64"></canvas>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🧮 Calculadora de Impostos</h3>
+                        <div class="space-y-3">
+                            <input type="number" id="salaryInput" placeholder="Salário Bruto (R$)" class="w-full p-2 bg-slate-700 border border-green-500 rounded text-green-400">
+                            <button onclick="calculateTaxes()" class="w-full px-4 py-2 bg-green-600 text-black rounded hover:bg-green-500">
+                                Calcular Impostos
+                            </button>
+                            <div id="taxResults" class="space-y-2 text-sm">
+                                <!-- Tax calculation results will be shown here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">📊 Indicadores</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>PIB Nacional:</span>
+                                <span class="text-green-400">R$ 9.9 trilhões</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Inflação (IPCA):</span>
+                                <span class="text-yellow-400">4.50%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Desemprego:</span>
+                                <span class="text-red-400">8.9%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Balança Comercial:</span>
+                                <span class="text-green-400">+US$ 22B</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- States Tab -->
+            <div id="states" class="tab-content h-full p-4 overflow-y-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🏛️ Seletor de Estados</h3>
+                        <select id="stateInfoSelect" class="w-full p-2 bg-slate-700 border border-green-500 rounded text-green-400 mb-4">
+                            <option value="">Selecione um Estado</option>
+                        </select>
+                        <div id="stateInfo" class="space-y-2 text-sm">
+                            <p class="text-gray-400">Selecione um estado para ver informações detalhadas</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🌍 Consulta CEP</h3>
+                        <div class="space-y-3">
+                            <input type="text" id="cepInput" placeholder="Digite o CEP (00000-000)" class="w-full p-2 bg-slate-700 border border-green-500 rounded text-green-400">
+                            <button onclick="searchCEP()" class="w-full px-4 py-2 bg-green-600 text-black rounded hover:bg-green-500">
+                                Buscar CEP
+                            </button>
+                            <div id="cepResults" class="space-y-2 text-sm">
+                                <!-- CEP results will be shown here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">📊 Ranking Estados</h3>
+                        <div id="stateRanking" class="space-y-2 text-sm max-h-64 overflow-y-auto">
+                            <!-- State ranking will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div id="security" class="tab-content h-full p-4 overflow-y-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🛡️ Status de Segurança</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span>Firewall:</span>
+                                <span class="status-indicator online">ATIVO</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Antivírus:</span>
+                                <span class="status-indicator online">PROTEGIDO</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Criptografia:</span>
+                                <span class="status-indicator online">AES-256</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>VPN:</span>
+                                <span class="status-indicator offline">DESCONECTADO</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🔍 Scanner de Rede</h3>
+                        <button onclick="scanNetwork()" class="w-full px-4 py-2 bg-green-600 text-black rounded hover:bg-green-500 mb-4">
+                            Iniciar Escaneamento
+                        </button>
+                        <div id="networkScanResults" class="space-y-2 text-sm max-h-48 overflow-y-auto">
+                            <!-- Network scan results will be shown here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terminal Tab -->
+            <div id="terminal" class="tab-content h-full flex flex-col">
+                <div class="flex-1 p-4 overflow-y-auto bg-black" id="terminalOutput">
+                    <div class="text-green-400 font-mono text-sm">
+                        <div>SISFRON Terminal v2.0 - Sistema Integrado de Fronteiras</div>
+                        <div>Digite 'help' para ver os comandos disponíveis</div>
+                        <div class="mt-2"></div>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-800 border-t border-green-500">
+                    <div class="flex items-center">
+                        <span class="text-green-400 mr-2">SISFRON@terminal:~$</span>
+                        <input type="text" id="terminalInput" class="flex-1 bg-transparent border-none outline-none text-green-400 font-mono" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 border border-green-500 rounded p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4 text-green-400">⚙️ Configurações</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm mb-2">Tema do Sistema:</label>
+                    <select class="w-full p-2 bg-slate-700 border border-green-500 rounded text-green-400">
+                        <option>Verde Matrix (Padrão)</option>
+                        <option>Azul Oceano</option>
+                        <option>Vermelho Alerta</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm mb-2">Atualização Automática:</label>
+                    <input type="checkbox" checked class="mr-2">
+                    <span class="text-sm">Ativado</span>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="closeSettings()" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500">
+                        Cancelar
+                    </button>
+                    <button onclick="saveSettings()" class="flex-1 px-4 py-2 bg-green-600 text-black rounded hover:bg-green-500">
+                        Salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
