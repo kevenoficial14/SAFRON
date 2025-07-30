@@ -3,762 +3,388 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISFRON v4.0 Ultra - Sistema Integrado Google em Tempo Real</title>
-    
-    <!-- Google Services Integration -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9i2L8qZ5qMoZqZ&libraries=geometry,places,visualization&callback=initGoogleServices"></script>
-    <script src="https://apis.google.com/js/api.js" async defer></script>
-    
-    <!-- Modern UI and Charts -->
+    <title>SISFRON - Sistema Integrado de Fronteiras e Observação Nacional</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
-    <script src="https://unpkg.com/@google-web-components/google-chart@4.0.0/google-chart.js"></script>
-    
-    <!-- Advanced Libraries -->
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/locale/pt-br.min.js"></script>
-    
-    <!-- Enhanced Icons and Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-    <link href="https://kit.fontawesome.com/css" rel="stylesheet">
-    
-    <!-- Real-time Communication -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
-    
-    <!-- CSS File -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    
-    <!-- Tailwind Configuration -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', 'sans-serif'],
-                        'mono': ['JetBrains Mono', 'Courier New', 'monospace']
-                    },
-                    colors: {
-                        'google-blue': '#4285f4',
-                        'google-red': '#ea4335',
-                        'google-yellow': '#fbbc04',
-                        'google-green': '#34a853',
-                        'matrix': {
-                            '50': '#f0fdf4',
-                            '100': '#dcfce7',
-                            '200': '#bbf7d0',
-                            '300': '#86efac',
-                            '400': '#4ade80',
-                            '500': '#22c55e',
-                            '600': '#16a34a',
-                            '700': '#15803d',
-                            '800': '#166534',
-                            '900': '#14532d'
-                        }
-                    },
-                    animation: {
-                        'scan': 'scan 3s linear infinite',
-                        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
-                        'matrix-rain': 'matrix-rain 20s linear infinite',
-                        'data-flow': 'data-flow 0.5s ease-in-out',
-                        'glitch': 'glitch 0.3s ease-in-out',
-                        'terminal-blink': 'terminal-blink 1s ease-in-out infinite'
-                    }
-                }
-            },
-            darkMode: 'class'
-        }
-    </script>
 </head>
-<body class="h-screen bg-gray-900 text-matrix-400 font-sans overflow-hidden matrix-effect">
-    <!-- Matrix Background -->
-    <canvas id="matrixCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-10"></canvas>
-    
-    <!-- Scan Line Effect -->
-    <div class="scan-line fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-matrix-400 to-transparent animate-scan z-20"></div>
-    
+<body class="h-screen bg-slate-900 text-green-400 font-mono overflow-hidden">
     <!-- Loading Screen -->
-    <div id="loadingScreen" class="fixed inset-0 bg-black flex items-center justify-center z-50 transition-opacity duration-1000">
-        <div class="text-center space-y-6">
-            <div class="relative">
-                <div class="w-32 h-32 border-4 border-matrix-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <span class="text-6xl animate-pulse">🇧🇷</span>
-                </div>
+    <div id="loadingScreen" class="fixed inset-0 bg-black flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="text-4xl mb-4">🇧🇷</div>
+            <div class="text-2xl text-green-400 mb-4">SISFRON</div>
+            <div class="text-sm mb-4">Sistema Integrado de Fronteiras e Observação Nacional</div>
+            <div class="loading-bar w-64 h-2 bg-gray-800 rounded">
+                <div class="loading-progress h-full bg-green-400 rounded transition-all duration-300"></div>
             </div>
-            <div class="space-y-2">
-                <h1 class="text-4xl font-bold text-matrix-400 font-mono animate-pulse">SISFRON v4.0 ULTRA</h1>
-                <p class="text-lg text-matrix-300">Sistema Integrado Google em Tempo Real</p>
-                <div class="w-96 h-2 bg-gray-800 rounded-full overflow-hidden mx-auto">
-                    <div id="loadingProgress" class="h-full bg-gradient-to-r from-matrix-500 to-google-blue transition-all duration-500 animate-pulse-glow"></div>
-                </div>
-                <p id="loadingText" class="text-sm text-gray-400 font-mono">Inicializando APIs do Google...</p>
-            </div>
+            <div class="mt-2 text-xs" id="loadingText">Inicializando sistemas...</div>
         </div>
     </div>
 
     <!-- Main Interface -->
     <div id="mainInterface" class="hidden h-full flex flex-col">
         <!-- Header -->
-        <header class="bg-gray-800/90 backdrop-blur-lg border-b border-matrix-500/30 px-6 py-4 z-30">
+        <header class="bg-slate-800 border-b border-green-500 p-4">
             <div class="flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <div class="relative">
-                        <span class="text-4xl animate-pulse">🇧🇷</span>
-                        <div class="absolute -top-1 -right-1 w-3 h-3 bg-matrix-400 rounded-full animate-ping"></div>
-                    </div>
+                    <div class="text-2xl">🇧🇷</div>
                     <div>
-                        <h1 class="text-3xl font-bold text-matrix-400 font-mono">SISFRON v4.0 ULTRA</h1>
-                        <p class="text-sm text-gray-400 flex items-center">
-                            <span class="w-2 h-2 bg-matrix-400 rounded-full animate-ping mr-2"></span>
-                            Integração Google • Dados em Tempo Real • IA Avançada
-                        </p>
+                        <h1 class="text-xl font-bold text-green-400">SISFRON v2.0</h1>
+                        <p class="text-xs text-gray-400">Sistema Integrado de Fronteiras e Observação Nacional</p>
                     </div>
                 </div>
-                
-                <!-- Real-time Status Panel -->
-                <div class="flex items-center space-x-6">
-                    <div class="text-center">
-                        <div class="text-xs text-gray-400">Google APIs</div>
-                        <div class="flex items-center space-x-1">
-                            <span class="w-2 h-2 bg-google-green rounded-full"></span>
-                            <span class="text-xs text-google-green font-mono">CONECTADO</span>
-                        </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <div class="text-sm" id="currentUser">Operador SISFRON</div>
+                        <div class="text-xs text-gray-400" id="systemTime"></div>
                     </div>
-                    
-                    <div class="text-center">
-                        <div class="text-xs text-gray-400" id="currentTime"></div>
-                        <div class="text-xs text-matrix-400 font-mono" id="systemUptime"></div>
-                    </div>
-                    
                     <div class="flex space-x-2">
-                        <button onclick="toggleAI()" id="aiToggle" class="px-3 py-1 bg-google-blue text-white rounded-lg text-sm hover:bg-blue-600 transition-colors flex items-center space-x-1">
-                            <span class="material-icons-outlined text-sm">psychology</span>
-                            <span>IA ON</span>
+                        <button onclick="toggleFullscreen()" class="px-3 py-1 bg-green-600 text-black rounded text-sm hover:bg-green-500">
+                            Tela Cheia
                         </button>
-                        <button onclick="toggleNotifications()" id="notifyToggle" class="px-3 py-1 bg-google-yellow text-black rounded-lg text-sm hover:bg-yellow-500 transition-colors flex items-center space-x-1">
-                            <span class="material-icons-outlined text-sm">notifications</span>
-                            <span>Alertas</span>
+                        <button onclick="showSettings()" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-500">
+                            Configurações
                         </button>
-                        <button onclick="showSettings()" class="px-3 py-1 bg-gray-700 text-white rounded-lg text-sm hover:bg-gray-600 transition-colors flex items-center space-x-1">
-                            <span class="material-icons-outlined text-sm">settings</span>
-                            <span>Config</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Enhanced News Ticker with Google News -->
-            <div class="mt-4 bg-gray-900/50 rounded-lg p-3 border border-matrix-500/30">
-                <div class="overflow-hidden">
-                    <div id="newsTicker" class="animate-ticker text-sm whitespace-nowrap">
-                        🔴 AO VIVO: Carregando notícias do Google em tempo real...
                     </div>
                 </div>
             </div>
         </header>
 
         <!-- Navigation Tabs -->
-        <nav class="bg-gray-800/70 backdrop-blur-lg border-b border-matrix-500/20">
-            <div class="flex overflow-x-auto scrollbar-hide">
-                <button class="tab-button active" data-tab="dashboard">
-                    <span class="material-icons-outlined">dashboard</span>
-                    <span>Dashboard</span>
-                </button>
-                <button class="tab-button" data-tab="google-maps">
-                    <span class="material-icons-outlined">map</span>
-                    <span>Google Maps</span>
-                </button>
-                <button class="tab-button" data-tab="weather">
-                    <span class="material-icons-outlined">cloud</span>
-                    <span>Clima Google</span>
-                </button>
-                <button class="tab-button" data-tab="analytics">
-                    <span class="material-icons-outlined">analytics</span>
-                    <span>Analytics</span>
-                </button>
-                <button class="tab-button" data-tab="ai-assistant">
-                    <span class="material-icons-outlined">smart_toy</span>
-                    <span>IA Assistant</span>
-                </button>
-                <button class="tab-button" data-tab="search">
-                    <span class="material-icons-outlined">search</span>
-                    <span>Google Search</span>
-                </button>
-                <button class="tab-button" data-tab="drive">
-                    <span class="material-icons-outlined">cloud_upload</span>
-                    <span>Google Drive</span>
-                </button>
-                <button class="tab-button" data-tab="security">
-                    <span class="material-icons-outlined">security</span>
-                    <span>Segurança IA</span>
-                </button>
-                <button class="tab-button" data-tab="terminal">
-                    <span class="material-icons-outlined">terminal</span>
-                    <span>Terminal Ultra</span>
-                </button>
+        <nav class="bg-slate-800 border-b border-green-500">
+            <div class="flex overflow-x-auto">
+                <button class="tab-button active" data-tab="dashboard">🏠 Dashboard</button>
+                <button class="tab-button" data-tab="weather">🌤️ Meteorologia</button>
+                <button class="tab-button" data-tab="maps">🗺️ Mapas</button>
+                <button class="tab-button" data-tab="radar">📡 Radar</button>
+                <button class="tab-button" data-tab="economics">💰 Economia</button>
+                <button class="tab-button" data-tab="states">🏛️ Estados</button>
+                <button class="tab-button" data-tab="security">🛡️ Segurança</button>
+                <button class="tab-button" data-tab="terminal">💻 Terminal</button>
             </div>
         </nav>
 
         <!-- Main Content -->
         <main class="flex-1 overflow-hidden">
             <!-- Dashboard Tab -->
-            <div id="dashboard" class="tab-content active h-full overflow-y-auto p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    <!-- Real-time Brasil Status with Google Data -->
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-google-blue">flag</span>
-                            <h3>Status do Brasil</h3>
-                            <div class="live-pulse"></div>
-                        </div>
-                        <div class="widget-content">
-                            <div class="stats-grid">
-                                <div class="stat-item">
-                                    <span class="stat-label">População Atual</span>
-                                    <span class="stat-value" id="brasilPopulation">215.3M</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Estados Ativos</span>
-                                    <span class="stat-value text-google-green">27</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Municípios Online</span>
-                                    <span class="stat-value" id="municipiosOnline">5.570</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Área Total</span>
-                                    <span class="stat-value">8.5M km²</span>
-                                </div>
+            <div id="dashboard" class="tab-content active h-full p-4 overflow-y-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 h-full">
+                    <!-- Status Brasil -->
+                    <div class="widget bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-3 text-green-400">🇧🇷 Status do Brasil</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>População:</span>
+                                <span class="text-green-400">215.3M</span>
                             </div>
-                            <div class="mt-4 p-3 bg-gray-800 rounded-lg">
-                                <div class="text-xs text-gray-400">Temperatura Nacional (Google)</div>
-                                <div class="text-2xl font-bold text-google-blue" id="nationalTemp">24°C</div>
-                                <div class="text-xs text-gray-400" id="tempLastUpdate">Atualizado agora</div>
+                            <div class="flex justify-between">
+                                <span>Estados:</span>
+                                <span class="text-green-400">26 + DF</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Municípios:</span>
+                                <span class="text-green-400">5.570</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Área:</span>
+                                <span class="text-green-400">8.5M km²</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Fuso Horário:</span>
+                                <span class="text-green-400" id="currentTimezone">UTC-3</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Google Maps Mini View -->
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-google-red">location_on</span>
-                            <h3>Google Maps Integrado</h3>
-                            <div class="live-pulse"></div>
+                    <!-- Clima Tempo Real -->
+                    <div class="widget bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-3 text-green-400">🌡️ Clima Nacional</h3>
+                        <div id="weatherSummary" class="space-y-2 text-sm">
+                            <div class="animate-pulse">Carregando dados meteorológicos...</div>
                         </div>
-                        <div class="widget-content">
-                            <div id="miniGoogleMap" class="h-32 rounded-lg overflow-hidden border border-gray-700"></div>
-                            <div class="mt-3 space-y-2">
-                                <div class="flex justify-between text-xs">
-                                    <span>Coordenadas:</span>
-                                    <span class="text-google-blue font-mono" id="currentCoords">-14.24°, -53.18°</span>
-                                </div>
-                                <div class="flex justify-between text-xs">
-                                    <span>Localização:</span>
-                                    <span class="text-matrix-400" id="currentLocation">Brasília, DF</span>
-                                </div>
-                                <button onclick="getCurrentLocation()" class="w-full px-3 py-1 bg-google-blue text-white rounded text-xs hover:bg-blue-600 transition-colors">
-                                    📍 Detectar Localização
-                                </button>
+                    </div>
+
+                    <!-- Economia -->
+                    <div class="widget bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-3 text-green-400">💱 Indicadores Econômicos</h3>
+                        <div id="economicData" class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>Dólar (USD):</span>
+                                <span class="text-yellow-400" id="usdRate">R$ 5.20</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Euro (EUR):</span>
+                                <span class="text-blue-400" id="eurRate">R$ 5.65</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>SELIC:</span>
+                                <span class="text-green-400">11.75%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>IPCA:</span>
+                                <span class="text-red-400">4.50%</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Google Weather Integration -->
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-google-yellow">wb_sunny</span>
-                            <h3>Clima Google Tempo Real</h3>
-                            <div class="live-pulse"></div>
-                        </div>
-                        <div class="widget-content">
-                            <div id="googleWeatherSummary" class="space-y-3">
-                                <!-- Weather data will be populated here -->
-                            </div>
-                            <div class="mt-4">
-                                <button onclick="refreshGoogleWeather()" class="w-full px-3 py-1 bg-google-green text-white rounded text-xs hover:bg-green-600 transition-colors">
-                                    🔄 Atualizar Google Weather
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Google Analytics Integration -->
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-google-green">analytics</span>
-                            <h3>Google Analytics Avançado</h3>
-                            <div class="live-pulse"></div>
-                        </div>
-                        <div class="widget-content">
-                            <div class="space-y-3">
-                                <div class="stat-item">
-                                    <span class="stat-label">Consultas Hoje</span>
-                                    <span class="stat-value text-google-blue" id="todayQueries">1.247</span>
+                    <!-- Sistema Activity -->
+                    <div class="widget bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-3 text-green-400">⚡ Atividade do Sistema</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span>CPU</span>
+                                    <span id="cpuUsage">45%</span>
                                 </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">APIs Google Ativas</span>
-                                    <span class="stat-value text-google-green" id="googleAPIs">15</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Dados Processados</span>
-                                    <span class="stat-value text-google-yellow" id="dataProcessed">3.2 GB</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Latência Google</span>
-                                    <span class="stat-value text-matrix-400" id="googleLatency">12ms</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-green-400" style="width: 45%"></div>
                                 </div>
                             </div>
-                            <div class="mt-4">
-                                <canvas id="analyticsChart" class="w-full h-20"></canvas>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span>Memória</span>
+                                    <span id="memUsage">62%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-blue-400" style="width: 62%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span>Rede</span>
+                                    <span>Online</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-green-400" style="width: 100%"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- AI Assistant Status -->
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-purple-400">psychology</span>
-                            <h3>Assistente IA Avançado</h3>
-                            <div class="live-pulse bg-purple-400"></div>
-                        </div>
-                        <div class="widget-content">
-                            <div class="text-center mb-4">
-                                <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-2">
-                                    <span class="material-icons-outlined text-2xl text-white">smart_toy</span>
-                                </div>
-                                <div class="text-sm text-gray-400">Status: <span class="text-green-400">Ativo</span></div>
-                            </div>
-                            <div class="space-y-2 text-xs">
-                                <div class="flex justify-between">
-                                    <span>Processamento IA:</span>
-                                    <span class="text-purple-400">99.7%</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Análises Hoje:</span>
-                                    <span class="text-blue-400">847</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Previsões Feitas:</span>
-                                    <span class="text-green-400">123</span>
-                                </div>
-                            </div>
-                            <div class="mt-4">
-                                <button onclick="openAIChat()" class="w-full px-3 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 transition-colors">
-                                    💬 Conversar com IA
-                                </button>
-                            </div>
+                    <!-- Logs Recentes -->
+                    <div class="widget bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-3 text-green-400">📋 Logs Recentes</h3>
+                        <div id="recentLogs" class="space-y-1 text-xs max-h-32 overflow-y-auto">
+                            <!-- Logs will be populated here -->
                         </div>
                     </div>
 
-                    <!-- Google Drive Integration -->
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-google-blue">cloud_queue</span>
-                            <h3>Google Drive Integrado</h3>
-                            <div class="live-pulse"></div>
+                    <!-- Mapa Brasil Miniatura -->
+                    <div class="widget bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-3 text-green-400">🗺️ Visão Geral</h3>
+                        <div id="miniMap" class="h-32 bg-slate-700 rounded flex items-center justify-center text-gray-400">
+                            Mapa do Brasil em miniatura
                         </div>
-                        <div class="widget-content">
-                            <div class="space-y-3">
-                                <div class="stat-item">
-                                    <span class="stat-label">Armazenamento Usado</span>
-                                    <span class="stat-value text-google-blue">15 GB</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Arquivos SISFRON</span>
-                                    <span class="stat-value text-matrix-400" id="driveFiles">2.847</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Sincronização</span>
-                                    <span class="stat-value text-google-green">Ativa</span>
-                                </div>
-                            </div>
-                            <div class="mt-4 space-y-2">
-                                <button onclick="uploadToDrive()" class="w-full px-3 py-1 bg-google-blue text-white rounded text-xs hover:bg-blue-600 transition-colors">
-                                    ☁️ Upload para Drive
-                                </button>
-                                <button onclick="viewDriveFiles()" class="w-full px-3 py-1 bg-gray-700 text-white rounded text-xs hover:bg-gray-600 transition-colors">
-                                    📁 Ver Arquivos
-                                </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather Tab -->
+            <div id="weather" class="tab-content h-full p-4 overflow-y-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🌤️ Condições Meteorológicas</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <select id="stateSelect" class="bg-slate-700 border border-green-500 rounded p-2 text-green-400">
+                                <option value="">Selecione o Estado</option>
+                            </select>
+                            <select id="citySelect" class="bg-slate-700 border border-green-500 rounded p-2 text-green-400">
+                                <option value="">Selecione a Cidade</option>
+                            </select>
+                        </div>
+                        <div id="weatherDetails" class="mt-4 space-y-4">
+                            <!-- Weather details will be populated here -->
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">📊 Gráfico Meteorológico</h3>
+                        <canvas id="weatherChart" class="w-full h-64"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maps Tab -->
+            <div id="maps" class="tab-content h-full">
+                <div class="h-full relative">
+                    <div id="mapContainer" class="h-full"></div>
+                    <div class="absolute top-4 left-4 bg-slate-800 border border-green-500 rounded p-4 z-1000">
+                        <h3 class="text-lg font-bold mb-2 text-green-400">🗺️ Controles do Mapa</h3>
+                        <div class="space-y-2">
+                            <button onclick="showFullBrazil()" class="w-full px-3 py-1 bg-green-600 text-black rounded text-sm hover:bg-green-500">
+                                Ver Brasil Completo
+                            </button>
+                            <button onclick="showStateCapitals()" class="w-full px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-500">
+                                Capitais
+                            </button>
+                            <button onclick="showMajorCities()" class="w-full px-3 py-1 bg-yellow-600 text-black rounded text-sm hover:bg-yellow-500">
+                                Grandes Cidades
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Radar Tab -->
+            <div id="radar" class="tab-content h-full p-4 overflow-y-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">📡 Sistema de Radar</h3>
+                        <div id="radarDisplay" class="h-64 bg-slate-900 rounded border border-green-500 relative overflow-hidden">
+                            <canvas id="radarCanvas" class="w-full h-full"></canvas>
+                        </div>
+                        <div class="mt-4 space-y-2">
+                            <button onclick="startRadarScan()" class="px-4 py-2 bg-green-600 text-black rounded hover:bg-green-500">
+                                Iniciar Varredura
+                            </button>
+                            <button onclick="stopRadarScan()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500">
+                                Parar Varredura
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🎯 Detecções</h3>
+                        <div id="radarDetections" class="space-y-2 max-h-64 overflow-y-auto">
+                            <!-- Radar detections will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Economics Tab -->
+            <div id="economics" class="tab-content h-full p-4 overflow-y-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">💰 Cotações</h3>
+                        <div id="exchangeRates" class="space-y-3">
+                            <!-- Exchange rates will be populated here -->
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">📈 Gráfico Econômico</h3>
+                        <canvas id="economicChart" class="w-full h-64"></canvas>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🧮 Calculadora de Impostos</h3>
+                        <div class="space-y-3">
+                            <input type="number" id="salaryInput" placeholder="Salário Bruto (R$)" class="w-full p-2 bg-slate-700 border border-green-500 rounded text-green-400">
+                            <button onclick="calculateTaxes()" class="w-full px-4 py-2 bg-green-600 text-black rounded hover:bg-green-500">
+                                Calcular Impostos
+                            </button>
+                            <div id="taxResults" class="space-y-2 text-sm">
+                                <!-- Tax calculation results will be shown here -->
                             </div>
                         </div>
                     </div>
-
-                    <!-- Real-time Activity Monitor -->
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-green-400">monitoring</span>
-                            <h3>Monitor de Atividade</h3>
-                            <div class="live-pulse"></div>
-                        </div>
-                        <div class="widget-content">
-                            <div id="activityLogs" class="space-y-1 max-h-32 overflow-y-auto text-xs"></div>
-                            <div class="mt-3 flex space-x-2">
-                                <button onclick="clearActivityLogs()" class="flex-1 px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors">
-                                    🗑️ Limpar
-                                </button>
-                                <button onclick="exportLogs()" class="flex-1 px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors">
-                                    📊 Exportar
-                                </button>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">📊 Indicadores</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>PIB Nacional:</span>
+                                <span class="text-green-400">R$ 9.9 trilhões</span>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- System Performance Google Enhanced -->
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-google-red">speed</span>
-                            <h3>Performance do Sistema</h3>
-                            <div class="live-pulse"></div>
-                        </div>
-                        <div class="widget-content">
-                            <div class="space-y-3">
-                                <div class="performance-metric">
-                                    <div class="flex justify-between text-xs mb-1">
-                                        <span>CPU Google Cloud</span>
-                                        <span id="cpuUsage">45%</span>
-                                    </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill bg-google-blue" id="cpuProgress"></div>
-                                    </div>
-                                </div>
-                                <div class="performance-metric">
-                                    <div class="flex justify-between text-xs mb-1">
-                                        <span>Memória</span>
-                                        <span id="memUsage">62%</span>
-                                    </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill bg-google-green" id="memProgress"></div>
-                                    </div>
-                                </div>
-                                <div class="performance-metric">
-                                    <div class="flex justify-between text-xs mb-1">
-                                        <span>Rede Google</span>
-                                        <span class="text-google-green">Otimizada</span>
-                                    </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill bg-google-green" style="width: 100%"></div>
-                                    </div>
-                                </div>
+                            <div class="flex justify-between">
+                                <span>Inflação (IPCA):</span>
+                                <span class="text-yellow-400">4.50%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Desemprego:</span>
+                                <span class="text-red-400">8.9%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Balança Comercial:</span>
+                                <span class="text-green-400">+US$ 22B</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Google Maps Tab -->
-            <div id="google-maps" class="tab-content h-full relative">
-                <div id="googleMapFull" class="h-full"></div>
-                <div class="absolute top-4 left-4 bg-gray-800/90 backdrop-blur-lg rounded-lg p-4 border border-matrix-500/30 max-w-sm">
-                    <h3 class="text-lg font-bold text-matrix-400 mb-3 flex items-center">
-                        <span class="material-icons-outlined mr-2">map</span>
-                        Controles Google Maps
-                    </h3>
-                    <div class="space-y-3">
-                        <button onclick="showBrazilView()" class="control-button bg-google-blue">
-                            🇧🇷 Vista do Brasil
+            <!-- States Tab -->
+            <div id="states" class="tab-content h-full p-4 overflow-y-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🏛️ Seletor de Estados</h3>
+                        <select id="stateInfoSelect" class="w-full p-2 bg-slate-700 border border-green-500 rounded text-green-400 mb-4">
+                            <option value="">Selecione um Estado</option>
+                        </select>
+                        <div id="stateInfo" class="space-y-2 text-sm">
+                            <p class="text-gray-400">Selecione um estado para ver informações detalhadas</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🌍 Consulta CEP</h3>
+                        <div class="space-y-3">
+                            <input type="text" id="cepInput" placeholder="Digite o CEP (00000-000)" class="w-full p-2 bg-slate-700 border border-green-500 rounded text-green-400">
+                            <button onclick="searchCEP()" class="w-full px-4 py-2 bg-green-600 text-black rounded hover:bg-green-500">
+                                Buscar CEP
+                            </button>
+                            <div id="cepResults" class="space-y-2 text-sm">
+                                <!-- CEP results will be shown here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">📊 Ranking Estados</h3>
+                        <div id="stateRanking" class="space-y-2 text-sm max-h-64 overflow-y-auto">
+                            <!-- State ranking will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div id="security" class="tab-content h-full p-4 overflow-y-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🛡️ Status de Segurança</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span>Firewall:</span>
+                                <span class="status-indicator online">ATIVO</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Antivírus:</span>
+                                <span class="status-indicator online">PROTEGIDO</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Criptografia:</span>
+                                <span class="status-indicator online">AES-256</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>VPN:</span>
+                                <span class="status-indicator offline">DESCONECTADO</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 border border-green-500 rounded p-4">
+                        <h3 class="text-lg font-bold mb-4 text-green-400">🔍 Scanner de Rede</h3>
+                        <button onclick="scanNetwork()" class="w-full px-4 py-2 bg-green-600 text-black rounded hover:bg-green-500 mb-4">
+                            Iniciar Escaneamento
                         </button>
-                        <button onclick="showCapitalsView()" class="control-button bg-google-green">
-                            🏛️ Capitais Estaduais
-                        </button>
-                        <button onclick="showSatelliteView()" class="control-button bg-google-yellow text-black">
-                            🛰️ Vista Satélite
-                        </button>
-                        <button onclick="showTrafficView()" class="control-button bg-google-red">
-                            🚗 Tráfego Tempo Real
-                        </button>
-                        <button onclick="showWeatherLayer()" class="control-button bg-purple-600">
-                            🌤️ Camada Clima
-                        </button>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-gray-700">
-                        <div class="text-sm text-gray-400 mb-2">Localização Atual:</div>
-                        <div class="text-xs font-mono text-matrix-400" id="mapCurrentLocation">Carregando...</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Weather Tab -->
-            <div id="weather" class="tab-content h-full overflow-y-auto p-6">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-google-yellow">cloud</span>
-                            <h3>Google Weather API Ultra</h3>
-                            <div class="live-pulse"></div>
-                        </div>
-                        <div class="widget-content">
-                            <div class="mb-4 grid grid-cols-2 gap-3">
-                                <select id="stateWeatherSelect" class="form-input">
-                                    <option value="">Selecione o Estado</option>
-                                </select>
-                                <select id="cityWeatherSelect" class="form-input">
-                                    <option value="">Selecione a Cidade</option>
-                                </select>
-                            </div>
-                            <div id="weatherDetailsGoogle" class="space-y-4">
-                                <div class="text-center text-gray-400">Selecione uma cidade para dados em tempo real do Google</div>
-                            </div>
-                            <div class="mt-4 space-y-2">
-                                <button onclick="getGoogleLocationWeather()" class="control-button bg-google-blue w-full">
-                                    📍 Usar Google Location
-                                </button>
-                                <button onclick="enableWeatherAlerts()" class="control-button bg-google-red w-full">
-                                    ⚠️ Alertas Meteorológicos
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-blue-400">analytics</span>
-                            <h3>Gráficos Meteorológicos IA</h3>
-                            <div class="live-pulse bg-blue-400"></div>
-                        </div>
-                        <div class="widget-content">
-                            <google-chart
-                                id="weatherGoogleChart"
-                                type="line"
-                                style="width: 100%; height: 300px;">
-                            </google-chart>
-                            <div class="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
-                                <div class="bg-gray-800 p-2 rounded">
-                                    <div class="text-blue-400">Mínima</div>
-                                    <div id="minTempGoogle">15°C</div>
-                                </div>
-                                <div class="bg-gray-800 p-2 rounded">
-                                    <div class="text-green-400">Atual</div>
-                                    <div id="currentTempGoogle">22°C</div>
-                                </div>
-                                <div class="bg-gray-800 p-2 rounded">
-                                    <div class="text-red-400">Máxima</div>
-                                    <div id="maxTempGoogle">28°C</div>
-                                </div>
-                            </div>
+                        <div id="networkScanResults" class="space-y-2 text-sm max-h-48 overflow-y-auto">
+                            <!-- Network scan results will be shown here -->
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Google Analytics Tab -->
-            <div id="analytics" class="tab-content h-full overflow-y-auto p-6">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-google-green">analytics</span>
-                            <h3>Google Analytics Avançado</h3>
-                            <div class="live-pulse"></div>
-                        </div>
-                        <div class="widget-content">
-                            <google-chart
-                                id="analyticsGoogleChart"
-                                type="column"
-                                style="width: 100%; height: 300px;">
-                            </google-chart>
-                        </div>
-                    </div>
-                    
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-purple-400">insights</span>
-                            <h3>Insights IA em Tempo Real</h3>
-                            <div class="live-pulse bg-purple-400"></div>
-                        </div>
-                        <div class="widget-content">
-                            <div id="aiInsights" class="space-y-3">
-                                <!-- AI insights will be populated here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- AI Assistant Tab -->
-            <div id="ai-assistant" class="tab-content h-full flex flex-col">
-                <div class="flex-1 p-6 space-y-4">
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-purple-400">smart_toy</span>
-                            <h3>Assistente IA SISFRON Ultra</h3>
-                            <div class="live-pulse bg-purple-400"></div>
-                        </div>
-                        <div class="widget-content">
-                            <div id="aiChatMessages" class="h-96 overflow-y-auto space-y-3 mb-4 p-4 bg-gray-900 rounded-lg border border-gray-700">
-                                <div class="ai-message">
-                                    <div class="flex items-start space-x-3">
-                                        <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
-                                            <span class="material-icons-outlined text-sm text-white">smart_toy</span>
-                                        </div>
-                                        <div class="flex-1">
-                                            <div class="text-sm text-purple-400 font-medium">SISFRON IA</div>
-                                            <div class="text-sm text-gray-300">Olá! Sou seu assistente IA avançado integrado com Google. Como posso ajudar no monitoramento nacional hoje?</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex space-x-2">
-                                <input type="text" id="aiChatInput" placeholder="Digite sua pergunta para a IA..." class="form-input flex-1">
-                                <button onclick="sendAIMessage()" class="control-button bg-purple-600">
-                                    <span class="material-icons-outlined">send</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Google Search Tab -->
-            <div id="search" class="tab-content h-full overflow-y-auto p-6">
-                <div class="widget-card">
-                    <div class="widget-header">
-                        <span class="material-icons-outlined text-google-blue">search</span>
-                        <h3>Google Search Integrado</h3>
-                        <div class="live-pulse"></div>
-                    </div>
-                    <div class="widget-content">
-                        <div class="mb-6">
-                            <div class="flex space-x-2">
-                                <input type="text" id="googleSearchInput" placeholder="Buscar no Google..." class="form-input flex-1">
-                                <button onclick="performGoogleSearch()" class="control-button bg-google-blue">
-                                    <span class="material-icons-outlined">search</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="googleSearchResults" class="space-y-4">
-                            <!-- Search results will be populated here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Google Drive Tab -->
-            <div id="drive" class="tab-content h-full overflow-y-auto p-6">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-google-blue">cloud_upload</span>
-                            <h3>Google Drive Integração</h3>
-                            <div class="live-pulse"></div>
-                        </div>
-                        <div class="widget-content">
-                            <div class="space-y-4">
-                                <div class="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
-                                    <span class="material-icons-outlined text-4xl text-gray-400 mb-2">cloud_upload</span>
-                                    <div class="text-gray-400">Arraste arquivos aqui ou clique para upload</div>
-                                    <input type="file" id="driveUpload" class="hidden" multiple>
-                                    <button onclick="document.getElementById('driveUpload').click()" class="mt-2 control-button bg-google-blue">
-                                        Selecionar Arquivos
-                                    </button>
-                                </div>
-                                <div class="space-y-2">
-                                    <button onclick="createDriveFolder()" class="control-button bg-google-green w-full">
-                                        📁 Criar Pasta SISFRON
-                                    </button>
-                                    <button onclick="syncDriveData()" class="control-button bg-google-yellow text-black w-full">
-                                        🔄 Sincronizar Dados
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-green-400">folder</span>
-                            <h3>Arquivos SISFRON</h3>
-                            <div class="live-pulse bg-green-400"></div>
-                        </div>
-                        <div class="widget-content">
-                            <div id="driveFilesList" class="space-y-2 max-h-80 overflow-y-auto">
-                                <!-- Drive files will be listed here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Security Tab -->
-            <div id="security" class="tab-content h-full overflow-y-auto p-6">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-google-red">security</span>
-                            <h3>Segurança IA Avançada</h3>
-                            <div class="live-pulse"></div>
-                        </div>
-                        <div class="widget-content">
-                            <div class="space-y-4">
-                                <div class="security-metric">
-                                    <div class="flex justify-between items-center">
-                                        <span>Google Cloud Security:</span>
-                                        <span class="status-badge online">ATIVO</span>
-                                    </div>
-                                </div>
-                                <div class="security-metric">
-                                    <div class="flex justify-between items-center">
-                                        <span>IA Anti-Intrusão:</span>
-                                        <span class="status-badge online">PROTEGIDO</span>
-                                    </div>
-                                </div>
-                                <div class="security-metric">
-                                    <div class="flex justify-between items-center">
-                                        <span>Criptografia Quântica:</span>
-                                        <span class="status-badge online">AES-512</span>
-                                    </div>
-                                </div>
-                                <div class="security-metric">
-                                    <div class="flex justify-between items-center">
-                                        <span>VPN Google:</span>
-                                        <span class="status-badge warning">STANDBY</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-6">
-                                <button onclick="runAdvancedSecurityScan()" class="control-button bg-google-red w-full">
-                                    🛡️ Verificação IA Completa
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="widget-card">
-                        <div class="widget-header">
-                            <span class="material-icons-outlined text-yellow-400">radar</span>
-                            <h3>Scanner IA Tempo Real</h3>
-                            <div class="live-pulse bg-yellow-400"></div>
-                        </div>
-                        <div class="widget-content">
-                            <div id="securityScanResults" class="space-y-2 max-h-64 overflow-y-auto">
-                                <!-- Security scan results -->
-                            </div>
-                            <div class="mt-4">
-                                <button onclick="startAIScan()" class="control-button bg-yellow-600 w-full">
-                                    🔍 Iniciar Scanner IA
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Terminal Tab -->
-            <div id="terminal" class="tab-content h-full flex flex-col bg-black">
-                <div class="flex-1 overflow-y-auto p-4" id="terminalOutput">
-                    <div class="terminal-line text-matrix-400 font-mono">
-                        <div>🇧🇷 SISFRON Terminal v4.0 Ultra - Integração Google AI</div>
-                        <div>Sistema com IA avançada e APIs Google em tempo real</div>
-                        <div>Digite 'help' para comandos ou 'ai [pergunta]' para IA</div>
+            <!-- Terminal Tab -->
+            <div id="terminal" class="tab-content h-full flex flex-col">
+                <div class="flex-1 p-4 overflow-y-auto bg-black" id="terminalOutput">
+                    <div class="text-green-400 font-mono text-sm">
+                        <div>SISFRON Terminal v2.0 - Sistema Integrado de Fronteiras</div>
+                        <div>Digite 'help' para ver os comandos disponíveis</div>
                         <div class="mt-2"></div>
                     </div>
                 </div>
-                <div class="bg-gray-900 border-t border-matrix-500 p-4">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-matrix-400 font-mono">SISFRON@v4.0:~$</span>
-                        <input type="text" id="terminalInput" class="flex-1 bg-transparent border-none outline-none text-matrix-400 font-mono text-base" autocomplete="off">
-                        <span class="text-matrix-400 animate-pulse font-mono">█</span>
+                <div class="p-4 bg-slate-800 border-t border-green-500">
+                    <div class="flex items-center">
+                        <span class="text-green-400 mr-2">SISFRON@terminal:~$</span>
+                        <input type="text" id="terminalInput" class="flex-1 bg-transparent border-none outline-none text-green-400 font-mono" autocomplete="off">
                     </div>
                 </div>
             </div>
@@ -766,49 +392,28 @@
     </div>
 
     <!-- Settings Modal -->
-    <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center z-50 hidden">
-        <div class="bg-gray-800 border border-matrix-500 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 class="text-xl font-bold mb-4 text-matrix-400 flex items-center">
-                <span class="material-icons-outlined mr-2">settings</span>
-                Configurações Avançadas
-            </h3>
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 border border-green-500 rounded p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4 text-green-400">⚙️ Configurações</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm mb-2 text-gray-300">Tema Google:</label>
-                    <select id="themeSelect" class="form-input">
-                        <option value="matrix">Matrix Green (Padrão)</option>
-                        <option value="google">Google Colors</option>
-                        <option value="dark">Dark Professional</option>
-                        <option value="neon">Neon Cyber</option>
+                    <label class="block text-sm mb-2">Tema do Sistema:</label>
+                    <select class="w-full p-2 bg-slate-700 border border-green-500 rounded text-green-400">
+                        <option>Verde Matrix (Padrão)</option>
+                        <option>Azul Oceano</option>
+                        <option>Vermelho Alerta</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm mb-2 text-gray-300">IA Assistant:</label>
-                    <div class="flex items-center space-x-2">
-                        <input type="checkbox" id="aiEnabled" checked class="form-checkbox">
-                        <span class="text-sm">Ativado (Respostas Inteligentes)</span>
-                    </div>
+                    <label class="block text-sm mb-2">Atualização Automática:</label>
+                    <input type="checkbox" checked class="mr-2">
+                    <span class="text-sm">Ativado</span>
                 </div>
-                <div>
-                    <label class="block text-sm mb-2 text-gray-300">Notificações Google:</label>
-                    <div class="flex items-center space-x-2">
-                        <input type="checkbox" id="googleNotifications" checked class="form-checkbox">
-                        <span class="text-sm">Push Notifications</span>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm mb-2 text-gray-300">Qualidade dos Dados:</label>
-                    <select id="dataQuality" class="form-input">
-                        <option value="ultra">Ultra Alta (Tempo Real)</option>
-                        <option value="high">Alta (Cache 2min)</option>
-                        <option value="medium">Média (Cache 10min)</option>
-                    </select>
-                </div>
-                <div class="flex space-x-3 mt-6">
-                    <button onclick="closeSettings()" class="flex-1 control-button bg-gray-600">
+                <div class="flex space-x-3">
+                    <button onclick="closeSettings()" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500">
                         Cancelar
                     </button>
-                    <button onclick="saveSettings()" class="flex-1 control-button bg-google-blue">
+                    <button onclick="saveSettings()" class="flex-1 px-4 py-2 bg-green-600 text-black rounded hover:bg-green-500">
                         Salvar
                     </button>
                 </div>
@@ -816,7 +421,6 @@
         </div>
     </div>
 
-    <!-- JavaScript File -->
     <script src="script.js"></script>
 </body>
 </html>
